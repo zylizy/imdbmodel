@@ -1,7 +1,13 @@
+import time
+
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from modAL.models import ActiveLearner
+from modAL.uncertainty import classifier_entropy
+from modAL.uncertainty import classifier_uncertainty
+from modAL.uncertainty import classifier_margin
+import timeit
 
 
 class Model:
@@ -58,14 +64,24 @@ class Model:
         label = np.array([int(_label)])
         self.learner.teach(X=self.x_pool_vec[index], y=label)
 
+    def get_uncertainty(self, instance):
+        c_uncertainty = classifier_uncertainty(self.learner, instance)
+        return c_uncertainty
+
     def auto_run(self, n_round, threshold):
         for i in range(n_round):
             idx, _ = self.learner.query(self.x_pool_vec)
             self.learner.teach(X=self.x_pool_vec[idx], y=self.y_pool[idx])
             score = self.score()
+            u = self.learner.predict_proba(self.x_pool_vec)
+            print(u)
             if score > threshold:
                 break
             print(f"round: {i}, scr: {score}")
+
+    def get_proba(self):
+        return self.learner.predict_proba(self.x_pool_vec)
+
 
 
 
